@@ -41,7 +41,7 @@ function App() {
     <div className="App">
       <LiveAPIProvider url={uri} apiKey={API_KEY}>
         <div className="streaming-console">
-          <SidePanel />
+          {/* <SidePanel /> */}
           <main>
             <div className="main-app-area">
               {/* APP goes here */}
@@ -60,7 +60,7 @@ function App() {
               videoRef={videoRef}
               supportsVideo={true}
               onVideoStreamChange={setVideoStream}
-              enableEditingSettings={true}
+              enableEditingSettings={false}
             >
               {/* put your own buttons here */}
             </ControlTray>
