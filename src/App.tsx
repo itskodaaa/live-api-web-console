@@ -21,13 +21,14 @@ import SidePanel from "./components/side-panel/SidePanel";
 import { Altair } from "./components/altair/Altair";
 import ControlTray from "./components/control-tray/ControlTray";
 import cn from "classnames";
+import { QuizTool } from './components/quiz-tool/QuizTool';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
-if (typeof API_KEY !== "string") {
-  throw new Error("set REACT_APP_GEMINI_API_KEY in .env");
+if (typeof API_KEY !== 'string') {
+  throw new Error('set REACT_APP_GEMINI_API_KEY in .env');
 }
 
-const host = "generativelanguage.googleapis.com";
+const host = 'generativelanguage.googleapis.com';
 const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
 
 function App() {
@@ -38,16 +39,17 @@ function App() {
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
   return (
-    <div className="App">
+    <div className='App'>
       <LiveAPIProvider url={uri} apiKey={API_KEY}>
-        <div className="streaming-console">
+        <div className='streaming-console'>
           {/* <SidePanel /> */}
           <main>
-            <div className="main-app-area">
+            <div className='main-app-area'>
               {/* APP goes here */}
               <Altair />
+              <QuizTool />
               <video
-                className={cn("stream", {
+                className={cn('stream', {
                   hidden: !videoRef.current || !videoStream,
                 })}
                 ref={videoRef}
@@ -58,10 +60,9 @@ function App() {
 
             <ControlTray
               videoRef={videoRef}
-              supportsVideo={true}
+              supportsVideo={false}
               onVideoStreamChange={setVideoStream}
-              enableEditingSettings={false}
-            >
+              enableEditingSettings={true}>
               {/* put your own buttons here */}
             </ControlTray>
           </main>

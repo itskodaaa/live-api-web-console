@@ -160,21 +160,18 @@ function ControlTray({
   };
 
   return (
-    <section className="control-tray">
-      <canvas style={{ display: "none" }} ref={renderCanvasRef} />
-      <nav className={cn("actions-nav", { disabled: !connected })}>
-        <button
-          className={cn("action-button mic-button")}
-          onClick={() => setMuted(!muted)}
-        >
+    <section className='control-tray'>
+      <canvas style={{ display: 'none' }} ref={renderCanvasRef} />
+      <nav className={cn('actions-nav', { disabled: !connected })}>
+        <button className={cn('action-button mic-button')} onClick={() => setMuted(!muted)}>
           {!muted ? (
-            <span className="material-symbols-outlined filled">mic</span>
+            <span className='material-symbols-outlined filled'>mic</span>
           ) : (
-            <span className="material-symbols-outlined filled">mic_off</span>
+            <span className='material-symbols-outlined filled'>mic_off</span>
           )}
         </button>
 
-        <div className="action-button no-action outlined">
+        <div className='action-button no-action outlined'>
           <AudioPulse volume={volume} active={connected} hover={false} />
         </div>
 
@@ -184,36 +181,35 @@ function ControlTray({
               isStreaming={screenCapture.isStreaming}
               start={changeStreams(screenCapture)}
               stop={changeStreams()}
-              onIcon="cancel_presentation"
-              offIcon="present_to_all"
+              onIcon='cancel_presentation'
+              offIcon='present_to_all'
             />
             <MediaStreamButton
               isStreaming={webcam.isStreaming}
               start={changeStreams(webcam)}
               stop={changeStreams()}
-              onIcon="videocam_off"
-              offIcon="videocam"
+              onIcon='videocam_off'
+              offIcon='videocam'
             />
           </>
         )}
         {children}
       </nav>
 
-      <div className={cn("connection-container", { connected })}>
-        <div className="connection-button-container">
+      <div className={cn('connection-container', { connected })}>
+        <div className='connection-button-container'>
           <button
             ref={connectButtonRef}
-            className={cn("action-button connect-toggle", { connected })}
-            onClick={connected ? disconnect : connect}
-          >
-            <span className="material-symbols-outlined filled">
-              {connected ? "pause" : "play_arrow"}
+            className={cn('action-button connect-toggle', { connected })}
+            onClick={connected ? disconnect : connect}>
+            <span className='material-symbols-outlined filled'>
+              {connected ? 'pause' : 'play_arrow'}
             </span>
           </button>
         </div>
-        <span className="text-indicator">Streaming</span>
+        <span className='text-indicator'>Streaming</span>
       </div>
-      {enableEditingSettings ? <SettingsDialog /> : ""}
+      {enableEditingSettings ? <SettingsDialog /> : ''}
     </section>
   );
 }
