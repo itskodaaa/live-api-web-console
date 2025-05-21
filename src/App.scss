@@ -43,9 +43,9 @@
   --Green-500: #0d9c53;
   --Green-700: #025022;
 
-  --Blue-400: #80c1ff;
-  --Blue-500: #1f94ff;
-  --Blue-800: #0f3557;
+  --Blue-400: #00bda7;
+  --Blue-500: #03B19D;
+  --Blue-800: #00473f;
 
   --Red-400: #ff9c7a;
   --Red-500: #ff4600;
@@ -53,9 +53,9 @@
   --Red-700: #bd3000;
 }
 
-body {
+body, html {
   font-family: 'sans-serif';
-  background: '#151515';
+  background: #151515;
 }
 
 .material-symbols-outlined {
@@ -116,7 +116,7 @@ body {
 }
 
 .streaming-console {
-  background: '#151515';
+  background: #151515;
   color: var(--gray-300);
   display: flex;
   height: 100vh;
