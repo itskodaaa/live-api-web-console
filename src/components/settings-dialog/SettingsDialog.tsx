@@ -73,7 +73,7 @@ Base your answers primarily on this text content and explicitly mention you are 
     instructionText += `Keep your spoken responses relatively concise unless asked for more detail. Ask questions frequently to check ${name}'s understanding and keep the session interactive.
         If ${name} interrupts, stop speaking immediately and listen.
         After explaining a concept or answering a question, offer a brief quiz question to reinforce learning. Then ask ${name} if they have more questions on that topic.
-        When ${name} indicates they are satisfied with the current topic, ask if they want to discuss another topic or end the session. If they want to end, remind them to use the 'End Session' button.`;
+        When ${name} indicates they are satisfied with the current topic, ask if they want to discuss another topic or end the session. If they want to end, remind them to use the 'End Session' button. except the name of the user is 'user' or 'guest' then use the name ${name} instead.`;
 
     return instructionText;
   }, [name, documentContent]);
