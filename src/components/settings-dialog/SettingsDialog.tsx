@@ -6,8 +6,15 @@ import { LiveConfig } from '../../multimodal-live-types';
 import VoiceSelector from './VoiceSelector';
 import ResponseModalitySelector from './ResponseModalitySelector';
 
+function getNameFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('name');
+}
+
 const SettingsDialog = () => {
-  const [name, setName] = useState('User');
+  const urlName = getNameFromUrl();
+  const [name, setName] = useState(urlName || 'User');
   const [open, setOpen] = useState(true);
   const [documentContent, setDocumentContent] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -122,17 +129,20 @@ Base your answers primarily on this text content and explicitly mention you are 
             </div>
           )}
 
-          <div className='name-input select-group'>
-            <label htmlFor='name'>Your Name</label>
-            <input
-              id='name'
-              type='text'
-              className='name'
-              value={name}
-              onChange={e => setName(e.target.value)}
-              disabled={connected}
-            />
-          </div>
+          {/* Hide name input if name is present in URL */}
+          {!urlName && (
+            <div className='name-input select-group'>
+              <label htmlFor='name'>Your Name</label>
+              <input
+                id='name'
+                type='text'
+                className='name'
+                value={name}
+                onChange={e => setName(e.target.value)}
+                disabled={connected}
+              />
+            </div>
+          )}
 
           <div className='mode-selectors'>
             {/* <ResponseModalitySelector /> */}
