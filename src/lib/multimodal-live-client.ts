@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Content, GenerativeContentBlob, Part } from "@google/generative-ai";
+import { Content, GenerativeContentBlob, Part, FunctionDeclaration, Tool } from "@google/generative-ai";
 import { EventEmitter } from "eventemitter3";
 import { difference } from "lodash";
 import {
@@ -58,6 +58,7 @@ interface MultimodalLiveClientEventTypes {
 export type MultimodalLiveAPIClientConnection = {
   url?: string;
   apiKey: string;
+  tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>;
 };
 
 /**
@@ -73,7 +74,9 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
     return { ...this.config };
   }
 
-  constructor({ url, apiKey }: MultimodalLiveAPIClientConnection) {
+  
+
+  constructor({ url, apiKey, tools }: MultimodalLiveAPIClientConnection) {
     super();
     url =
       url ||
@@ -81,6 +84,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
     url += `?key=${apiKey}`;
     this.url = url;
     this.send = this.send.bind(this);
+    this.config = { model: "", tools: tools };
   }
 
   log(type: string, message: StreamingLog["message"]) {
@@ -113,7 +117,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
       };
       ws.addEventListener("error", onError);
       ws.addEventListener("open", (ev: Event) => {
-        if (!this.config) {
+        if (!config) {
           reject("Invalid config sent to `connect(config)`");
           return;
         }
@@ -123,8 +127,9 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
         this.ws = ws;
 
         const setupMessage: SetupMessage = {
-          setup: this.config,
+          setup: config,
         };
+        console.log("Sending setup message:", setupMessage);
         this._sendDirect(setupMessage);
         this.log("client.send", "setup");
 

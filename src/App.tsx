@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.scss";
-import { LiveAPIProvider } from "./contexts/LiveAPIContext";
+import { LiveAPIProvider, useLiveAPIContext } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import { Altair } from "./components/altair/Altair";
 import ControlTray from "./components/control-tray/ControlTray";
 import cn from "classnames";
-import { QuizTool } from './components/quiz-tool/QuizTool';
+import { QuizTool, declaration as quizToolDeclaration } from './components/quiz-tool/QuizTool';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== 'string') {
@@ -31,44 +31,65 @@ if (typeof API_KEY !== 'string') {
 const host = 'generativelanguage.googleapis.com';
 const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
 
-function App() {
+function AppContent() {
+  const { setSourceDocument } = useLiveAPIContext();
   // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
   // feel free to style as you see fit
   const videoRef = useRef<HTMLVideoElement>(null);
   // either the screen capture, the video or null, if null we hide it
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fileUrl = urlParams.get('fileUrl');
+
+    if (fileUrl) {
+      fetch(fileUrl)
+        .then((response) => response.text())
+        .then((data) => {
+          setSourceDocument(data);
+        })
+        .catch((error) => console.error('Error fetching file:', error));
+    }
+  }, [setSourceDocument]);
+
   return (
     <div className='App'>
-      <LiveAPIProvider url={uri} apiKey={API_KEY}>
-        <div className='streaming-console'>
-          {/* <SidePanel /> */}
-          <main>
-            <div className='main-app-area'>
-              {/* APP goes here */}
-              <Altair />
-              <QuizTool />
-              <video
-                className={cn('stream', {
-                  hidden: !videoRef.current || !videoStream,
-                })}
-                ref={videoRef}
-                autoPlay
-                playsInline
-              />
-            </div>
+      <div className='streaming-console'>
+        {/* <SidePanel /> */}
+        <main>
+          <div className='main-app-area'>
+            {/* APP goes here */}
+            <Altair />
+            <QuizTool />
+            <video
+              className={cn('stream', {
+                hidden: !videoRef.current || !videoStream,
+              })}
+              ref={videoRef}
+              autoPlay
+              playsInline
+            />
+          </div>
 
-            <ControlTray
-              videoRef={videoRef}
-              supportsVideo={false}
-              onVideoStreamChange={setVideoStream}
-              enableEditingSettings={true}>
-              {/* put your own buttons here */}
-            </ControlTray>
-          </main>
-        </div>
-      </LiveAPIProvider>
+          <ControlTray
+            videoRef={videoRef}
+            supportsVideo={false}
+            onVideoStreamChange={setVideoStream}
+            enableEditingSettings={true}>
+            {/* put your own buttons here */}
+          </ControlTray>
+        </main>
+      </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <LiveAPIProvider url={uri} apiKey={API_KEY} tools={[{ functionDeclarations: [quizToolDeclaration] }, { googleSearch: {} }]}>
+      <AppContent />
+    </LiveAPIProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Select from "react-select";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
+import { LiveConfig, LiveGenerationConfig } from "../../multimodal-live-types";
 
 const voiceOptions = [
   { value: "Puck", label: "Puck" },
@@ -13,36 +14,47 @@ const voiceOptions = [
 export default function VoiceSelector() {
   const { config, setConfig } = useLiveAPIContext();
 
-  useEffect(() => {
-    const voiceName =
-      config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig
-        ?.voiceName || "Atari02";
-    const voiceOption = { value: voiceName, label: voiceName };
-    setSelectedOption(voiceOption);
-  }, [config]);
+  const getVoiceName = () =>
+    config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig
+      ?.voiceName || "Atari02";
 
   const [selectedOption, setSelectedOption] = useState<{
     value: string;
     label: string;
-  } | null>(voiceOptions[5]);
+  } | null>(() => ({
+    value: getVoiceName(),
+    label: getVoiceName(),
+  }));
+
+  useEffect(() => {
+    setSelectedOption({ value: getVoiceName(), label: getVoiceName() });
+  }, [config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName]);
 
   const updateConfig = useCallback(
     (voiceName: string) => {
-      setConfig({
-        ...config,
-        generationConfig: {
-          ...config.generationConfig,
+      setConfig((prevConfig: LiveConfig): LiveConfig => {
+        const newGenerationConfig: Partial<LiveGenerationConfig> = {
+          ...(prevConfig.generationConfig || {}),
+          responseModalities: prevConfig.generationConfig?.responseModalities || "text", // Ensure required property is present
           speechConfig: {
+            ...(prevConfig.generationConfig?.speechConfig || {}),
             voiceConfig: {
+              ...(prevConfig.generationConfig?.speechConfig?.voiceConfig || {}),
               prebuiltVoiceConfig: {
+                ...(prevConfig.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig || {}),
                 voiceName: voiceName,
               },
             },
           },
-        },
+        };
+
+        return {
+          ...prevConfig,
+          generationConfig: newGenerationConfig,
+        };
       });
     },
-    [config, setConfig]
+    [setConfig]
   );
 
   return (

@@ -14,26 +14,40 @@
  * limitations under the License.
  */
 
-import { createContext, FC, ReactNode, useContext } from "react";
+import { createContext, FC, ReactNode, useContext, useState } from "react";
 import { useLiveAPI, UseLiveAPIResults } from "../hooks/use-live-api";
+import { FunctionDeclaration, Tool } from '@google/generative-ai';
 
-const LiveAPIContext = createContext<UseLiveAPIResults | undefined>(undefined);
+interface LiveAPIContextResults extends UseLiveAPIResults {
+  sourceDocument: string | null;
+  setSourceDocument: (doc: string | null) => void;
+  setTools: (tools: FunctionDeclaration[]) => void;
+}
+
+const LiveAPIContext = createContext<LiveAPIContextResults | undefined>(
+  undefined
+);
 
 export type LiveAPIProviderProps = {
   children: ReactNode;
   url?: string;
   apiKey: string;
+  tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>;
 };
 
 export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({
   url,
   apiKey,
   children,
+  tools,
 }) => {
-  const liveAPI = useLiveAPI({ url, apiKey });
+  const liveAPI = useLiveAPI({ url, apiKey, tools });
+  const [sourceDocument, setSourceDocument] = useState<string | null>(null);
 
   return (
-    <LiveAPIContext.Provider value={liveAPI}>
+    <LiveAPIContext.Provider
+      value={{ ...liveAPI, sourceDocument, setSourceDocument, setTools: liveAPI.setTools }}
+    >
       {children}
     </LiveAPIContext.Provider>
   );

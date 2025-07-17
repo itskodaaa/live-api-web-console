@@ -2,11 +2,12 @@ import { type FunctionDeclaration, SchemaType } from '@google/generative-ai';
 import { useEffect, useState, memo } from 'react';
 import { useLiveAPIContext } from '../../contexts/LiveAPIContext';
 import { ToolCall } from '../../multimodal-live-types';
+import './quiz-tool.scss';
 
 // Define the function declaration for the quiz tool
-const declaration: FunctionDeclaration = {
-  name: 'display_quiz_questions',
-  description: 'Displays a list of quiz questions and their answers.',
+export const declaration: FunctionDeclaration = {
+  name: 'create_quiz',
+  description: 'Creates a quiz with a list of questions and their answers, then displays it to the user.',
   parameters: {
     type: SchemaType.OBJECT,
     properties: {

@@ -19,3 +19,13 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+
+// Mock for the HTML canvas element
+if (typeof HTMLCanvasElement.prototype.getContext === 'undefined') {
+    HTMLCanvasElement.prototype.getContext = () => null;
+}
+
+// Mock for structuredClone
+if (typeof global.structuredClone === 'undefined') {
+    global.structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
+}

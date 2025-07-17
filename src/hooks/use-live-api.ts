@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FunctionDeclaration, Tool } from '@google/generative-ai';
 import {
   MultimodalLiveAPIClientConnection,
   MultimodalLiveClient,
@@ -26,28 +27,31 @@ import VolMeterWorket from "../lib/worklets/vol-meter";
 
 export type UseLiveAPIResults = {
   client: MultimodalLiveClient;
-  setConfig: (config: LiveConfig) => void;
+  setConfig: React.Dispatch<React.SetStateAction<LiveConfig>>;
   config: LiveConfig;
   connected: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   volume: number;
+  setTools: (tools: FunctionDeclaration[]) => void;
 };
 
 export function useLiveAPI({
   url,
   apiKey,
-}: MultimodalLiveAPIClientConnection): UseLiveAPIResults {
+  tools,
+}: MultimodalLiveAPIClientConnection & { tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }> }): UseLiveAPIResults {
   const client = useMemo(
-    () => new MultimodalLiveClient({ url, apiKey }),
-    [url, apiKey],
+    () => new MultimodalLiveClient({ url, apiKey, tools }),
+    [url, apiKey, tools],
   );
   const audioStreamerRef = useRef<AudioStreamer | null>(null);
 
   const [connected, setConnected] = useState(false);
-  const [config, setConfig] = useState<LiveConfig>({
+  const [config, setConfig] = useState<LiveConfig>(() => ({
     model: "models/gemini-2.0-flash-exp",
-  });
+    tools: tools || [],
+  }));
   const [volume, setVolume] = useState(0);
 
   // register audio for streaming server -> speakers
@@ -64,7 +68,7 @@ export function useLiveAPI({
           });
       });
     }
-  }, [audioStreamerRef]);
+  }, []);
 
   useEffect(() => {
     const onClose = () => {
@@ -87,7 +91,7 @@ export function useLiveAPI({
         .off("interrupted", stopAudioStreamer)
         .off("audio", onAudio);
     };
-  }, [client]);
+  }, [client, config]);
 
   const connect = useCallback(async () => {
     console.log(config);
@@ -104,6 +108,16 @@ export function useLiveAPI({
     setConnected(false);
   }, [setConnected, client]);
 
+  const setTools = useCallback((newTools: FunctionDeclaration[]) => {
+    setConfig(prevConfig => {
+      const updatedConfig = {
+        ...prevConfig,
+        tools: newTools.length > 0 ? [{ functionDeclarations: newTools }] : [],
+      };
+      return updatedConfig;
+    });
+  }, [setConfig]);
+
   return {
     client,
     config,
@@ -112,5 +126,6 @@ export function useLiveAPI({
     connect,
     disconnect,
     volume,
+    setTools,
   };
 }
