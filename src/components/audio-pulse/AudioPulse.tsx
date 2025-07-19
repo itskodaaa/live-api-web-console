@@ -19,8 +19,6 @@ import React from "react";
 import { useEffect, useRef } from "react";
 import c from "classnames";
 
-const lineCount = 3;
-
 export type AudioPulseProps = {
   active: boolean;
   volume: number;
@@ -28,37 +26,33 @@ export type AudioPulseProps = {
 };
 
 export default function AudioPulse({ active, volume, hover }: AudioPulseProps) {
-  const lines = useRef<HTMLDivElement[]>([]);
+  const bubbles = useRef<HTMLDivElement[]>([]);
 
   useEffect(() => {
-    let timeout: number | null = null;
     const update = () => {
-      lines.current.forEach(
-        (line, i) =>
-        (line.style.height = `${Math.min(
-          24,
-          4 + volume * (i === 1 ? 400 : 60),
-        )}px`),
-      );
-      timeout = window.setTimeout(update, 100);
+      const normalizedVolume = Math.min(Math.max(volume, 0), 1); // Normalize volume between 0 and 1
+      bubbles.current.forEach((bubble) => {
+        if (bubble) {
+          bubble.style.transform = `scale(${1 + normalizedVolume * 0.5})`;
+          bubble.style.opacity = `${0.3 + normalizedVolume * 0.7}`;
+        }
+      });
     };
 
-    update();
+    const animationFrame = requestAnimationFrame(update);
 
-    return () => clearTimeout((timeout as number)!);
+    return () => cancelAnimationFrame(animationFrame);
   }, [volume]);
 
   return (
     <div className={c("audioPulse", { active, hover })}>
-      {Array(lineCount)
-        .fill(null)
-        .map((_, i) => (
-          <div
-            key={i}
-            ref={(el) => (lines.current[i] = el!)}
-            style={{ animationDelay: `${i * 133}ms` }}
-          />
-        ))}
+      {[...Array(3)].map((_, i) => (
+        <div
+          key={i}
+          ref={(el) => (bubbles.current[i] = el!)}
+          className="bubble"
+        />
+      ))}
     </div>
   );
 }

@@ -17,6 +17,7 @@
 import "./react-select.scss";
 import cn from "classnames";
 import { useEffect, useRef, useState } from "react";
+import { Part } from '@google/generative-ai';
 import { RiSidebarFoldLine, RiSidebarUnfoldLine } from "react-icons/ri";
 import Select from "react-select";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
@@ -65,13 +66,16 @@ export default function SidePanel() {
   }, [client, log]);
 
   const handleSubmit = () => {
-    let systemInstruction = "You are a helpful assistant. You have access to a tool called `create_quiz` that can generate quizzes. When the user asks for a quiz, or if you determine that a quiz would be beneficial based on the conversation, you MUST call the `create_quiz` tool with the quiz data. The quiz data should be an array of objects, each containing a 'question', 'answers' (an array of strings), and 'correct_answer_index' (the zero-based index of the correct answer). You also have access to a `googleSearch` tool. You should use `googleSearch` when you need to find information on the internet.";
+    let partsToSend: Part[] = [];
 
     if (sourceDocument) {
-      systemInstruction += `\n\nThe user has provided a document. You should use this document as context for generating quizzes. Document: ${sourceDocument}`;
+      partsToSend.push(...sourceDocument);
+      partsToSend.push({ text: `The user has provided a document via URL. Please use this document as context for generating quizzes or graphs, or for answering questions.` });
     }
 
-    client.send([{ text: systemInstruction }, { text: textInput }]);
+    partsToSend.push({ text: textInput });
+
+    client.send(partsToSend);
 
     setTextInput("");
     if (inputRef.current) {

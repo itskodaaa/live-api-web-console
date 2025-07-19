@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FunctionDeclaration, Tool } from '@google/generative-ai';
+import { FunctionDeclaration, Part, Tool } from '@google/generative-ai';
 import {
   MultimodalLiveAPIClientConnection,
   MultimodalLiveClient,
@@ -40,7 +40,9 @@ export function useLiveAPI({
   url,
   apiKey,
   tools,
-}: MultimodalLiveAPIClientConnection & { tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }> }): UseLiveAPIResults {
+  voice,
+  systemInstruction,
+}: MultimodalLiveAPIClientConnection & { tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>, voice?: string | null, systemInstruction?: { parts: Part[] } }): UseLiveAPIResults {
   const client = useMemo(
     () => new MultimodalLiveClient({ url, apiKey, tools }),
     [url, apiKey, tools],
@@ -51,6 +53,8 @@ export function useLiveAPI({
   const [config, setConfig] = useState<LiveConfig>(() => ({
     model: "models/gemini-2.0-flash-exp",
     tools: tools || [],
+    generationConfig: voice ? { speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } : undefined,
+    systemInstruction: systemInstruction,
   }));
   const [volume, setVolume] = useState(0);
 
@@ -92,6 +96,34 @@ export function useLiveAPI({
         .off("audio", onAudio);
     };
   }, [client, config]);
+
+  useEffect(() => {
+    const handleVoiceError = () => {
+      setConfig(prevConfig => ({
+        ...prevConfig,
+        generationConfig: {
+          ...(prevConfig.generationConfig || {}),
+          speechConfig: {
+            ...(prevConfig.generationConfig?.speechConfig || {}),
+            voiceConfig: {
+              ...(prevConfig.generationConfig?.speechConfig?.voiceConfig || {}),
+              prebuiltVoiceConfig: {
+                voiceName: "en-US-Neural2-D", // Fallback to a safe voice
+              },
+            },
+          },
+        },
+      }));
+      // Reconnect to apply the new voice config
+      connect();
+    };
+
+    client.on('voiceError', handleVoiceError);
+
+    return () => {
+      client.off('voiceError', handleVoiceError);
+    };
+  }, [client, setConfig]);
 
   const connect = useCallback(async () => {
     console.log(config);

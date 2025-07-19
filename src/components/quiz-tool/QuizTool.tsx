@@ -50,6 +50,8 @@ type QuizItem = {
 
 function QuizToolComponent() {
   const [quizData, setQuizData] = useState<QuizItem[]>([]);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const { client } = useLiveAPIContext();
 
   useEffect(() => {
@@ -61,6 +63,8 @@ function QuizToolComponent() {
         const data = (fc.args as { quiz_data: QuizItem[] }).quiz_data;
         if (Array.isArray(data)) {
           setQuizData(data);
+          setSelectedAnswers(new Array(data.length).fill(-1)); // Initialize selected answers
+          setQuizSubmitted(false); // Reset submission status
         }
       }
       if (toolCall.functionCalls.length) {
@@ -82,27 +86,58 @@ function QuizToolComponent() {
     };
   }, [client]);
 
+  const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
+    if (!quizSubmitted) {
+      const newSelectedAnswers = [...selectedAnswers];
+      newSelectedAnswers[questionIndex] = answerIndex;
+      setSelectedAnswers(newSelectedAnswers);
+    }
+  };
+
+  const handleSubmitQuiz = () => {
+    setQuizSubmitted(true);
+
+    const quizResults = quizData.map((quizItem, index) => ({
+      question: quizItem.question,
+      selectedAnswer: selectedAnswers[index] !== -1 ? quizItem.answers[selectedAnswers[index]] : 'No answer selected',
+      isCorrect: selectedAnswers[index] === quizItem.correct_answer_index,
+    }));
+
+    client.send([{ text: `User submitted quiz results: ${JSON.stringify(quizResults)}` }]);
+  };
+
   return (
     <div className='quiz-tool'>
       {quizData.length > 0 && <h3>Quiz Questions:</h3>}
-      {quizData.map((quizItem, index) => (
-        <div key={index} className='quiz-question'>
+      {quizData.map((quizItem, questionIndex) => (
+        <div key={questionIndex} className='quiz-question'>
           <p>
-            <strong>{`Q${index + 1}:`}</strong> {quizItem.question}
+            <strong>{`Q${questionIndex + 1}:`}</strong> {quizItem.question}
           </p>
           <ul>
-            {quizItem.answers.map((answer, ansIndex) => (
+            {quizItem.answers.map((answer, answerIndex) => (
               <li
-                key={ansIndex}
-                style={{
-                  fontWeight: ansIndex === quizItem.correct_answer_index ? 'bold' : 'normal',
-                }}>
+                key={answerIndex}
+                onClick={() => handleAnswerSelect(questionIndex, answerIndex)}
+                className={
+                  quizSubmitted && answerIndex === quizItem.correct_answer_index
+                    ? 'correct-answer'
+                    : quizSubmitted && selectedAnswers[questionIndex] === answerIndex && selectedAnswers[questionIndex] !== quizItem.correct_answer_index
+                    ? 'incorrect-answer'
+                    : selectedAnswers[questionIndex] === answerIndex
+                    ? 'selected-answer'
+                    : ''
+                }
+              >
                 {answer}
               </li>
             ))}
           </ul>
         </div>
       ))}
+      {quizData.length > 0 && !quizSubmitted && (
+        <button onClick={handleSubmitQuiz}>Submit Quiz</button>
+      )}
     </div>
   );
 }

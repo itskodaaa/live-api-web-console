@@ -11,12 +11,19 @@ const voiceOptions = [
   { value: "Aoede", label: "Aoede" },
 ];
 
+function getVoiceFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('voice');
+}
+
 export default function VoiceSelector() {
   const { config, setConfig } = useLiveAPIContext();
+  const urlVoice = getVoiceFromUrl();
 
   const getVoiceName = () =>
     config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig
-      ?.voiceName || "Atari02";
+      ?.voiceName || "Zephyr";
 
   const [selectedOption, setSelectedOption] = useState<{
     value: string;
@@ -28,7 +35,7 @@ export default function VoiceSelector() {
 
   useEffect(() => {
     setSelectedOption({ value: getVoiceName(), label: getVoiceName() });
-  }, [config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName]);
+  }, [config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName, urlVoice]);
 
   const updateConfig = useCallback(
     (voiceName: string) => {
@@ -91,6 +98,7 @@ export default function VoiceSelector() {
             updateConfig(e.value);
           }
         }}
+        isDisabled={!!urlVoice}
       />
     </div>
   );

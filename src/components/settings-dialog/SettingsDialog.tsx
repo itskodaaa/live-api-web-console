@@ -14,12 +14,27 @@ function getNameFromUrl() {
 
 const SettingsDialog = () => {
   const urlName = getNameFromUrl();
+  const urlFilePresent = !!new URLSearchParams(window.location.search).get('fileUrl');
   const [name, setName] = useState(urlName || 'User');
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(!(urlName && urlFilePresent));
   const [documentContent, setDocumentContent] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
-  const { config, setConfig, connected } = useLiveAPIContext();
+  const { config, setConfig, connected, sourceDocument } = useLiveAPIContext();
+
+  useEffect(() => {
+    if (sourceDocument && sourceDocument.length > 0) {
+      // Assuming the first part is text for display purposes in the settings dialog
+      // This might need refinement if sourceDocument can contain non-text parts
+      const firstPart = sourceDocument[0];
+      if ('text' in firstPart && typeof firstPart.text === 'string') {
+        setDocumentContent(firstPart.text);
+        setSelectedFileName('Uploaded Document'); // Generic name for URL-provided file
+      } else if ('inlineData' in firstPart) {
+        setSelectedFileName(`Uploaded ${firstPart.inlineData?.mimeType.split('/')[1].toUpperCase()} File`);
+      }
+    }
+  }, [sourceDocument]);
   const functionDeclarations: FunctionDeclaration[] = useMemo(() => {
     if (!Array.isArray(config.tools)) {
       return [];
@@ -79,14 +94,13 @@ Base your answers primarily on this text content and explicitly mention you are 
   }, [name, documentContent]);
 
   useEffect(() => {
-    const newConfig: LiveConfig = {
-      ...config,
+    setConfig(prevConfig => ({
+      ...prevConfig,
       systemInstruction: {
         parts: [{ text: systemInstruction }],
       },
-    };
-    setConfig(newConfig);
-  }, [systemInstruction, config, setConfig]);
+    }));
+  }, [systemInstruction, setConfig]);
 
   const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -156,13 +170,13 @@ Base your answers primarily on this text content and explicitly mention you are 
               type='file'
               accept='*/*'
               onChange={handleFileChange}
-              disabled={connected}
+              disabled={connected || urlFilePresent}
               style={{ display: 'none' }}
             />
             <label htmlFor='document-upload' className='file-label'>
               {selectedFileName ? selectedFileName : 'Select File'}
             </label>
-            {selectedFileName && !connected && (
+            {selectedFileName && !connected && !urlFilePresent && (
               <button
                 className='clear-file-button small'
                 onClick={() => {

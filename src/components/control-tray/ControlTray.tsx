@@ -23,8 +23,21 @@ import { useScreenCapture } from "../../hooks/use-screen-capture";
 import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
+
 import "./control-tray.scss";
 import SettingsDialog from "../settings-dialog/SettingsDialog";
+
+function getNameFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('name');
+}
+
+function getFileUrlPresent() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return !!params.get('fileUrl');
+}
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -77,6 +90,10 @@ function ControlTray({
 
   const { client, connected, connect, disconnect, volume } =
     useLiveAPIContext();
+
+  const urlName = getNameFromUrl();
+  const urlFilePresent = getFileUrlPresent();
+  const shouldAnimatePlayButton = !connected && urlName && urlFilePresent;
 
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
@@ -200,7 +217,7 @@ function ControlTray({
         <div className='connection-button-container'>
           <button
             ref={connectButtonRef}
-            className={cn('action-button connect-toggle', { connected })}
+            className={cn('action-button connect-toggle', { connected, 'play-button-animation': shouldAnimatePlayButton })}
             onClick={connected ? disconnect : connect}>
             <span className='material-symbols-outlined filled'>
               {connected ? 'pause' : 'play_arrow'}

@@ -53,6 +53,7 @@ interface MultimodalLiveClientEventTypes {
   turncomplete: () => void;
   toolcall: (toolCall: ToolCall) => void;
   toolcallcancellation: (toolcallCancellation: ToolCallCancellation) => void;
+  voiceError: () => void;
 }
 
 export type MultimodalLiveAPIClientConnection = {
@@ -97,6 +98,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
   }
 
   connect(config: LiveConfig): Promise<boolean> {
+    console.log("Attempting to connect WebSocket...");
     this.config = config;
 
     const ws = new WebSocket(this.url);
@@ -110,6 +112,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
     });
     return new Promise((resolve, reject) => {
       const onError = (ev: Event) => {
+        console.error("WebSocket error:", ev);
         this.disconnect(ws);
         const message = `Could not connect to "${this.url}"`;
         this.log(`server.${ev.type}`, message);
@@ -117,6 +120,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
       };
       ws.addEventListener("error", onError);
       ws.addEventListener("open", (ev: Event) => {
+        console.log("WebSocket opened.");
         if (!config) {
           reject("Invalid config sent to `connect(config)`");
           return;
@@ -135,6 +139,7 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
 
         ws.removeEventListener("error", onError);
         ws.addEventListener("close", (ev: CloseEvent) => {
+          console.log("WebSocket closed:", ev);
           this.disconnect(ws);
           let reason = ev.reason || "";
           if (reason.toLowerCase().includes("error")) {
@@ -145,6 +150,9 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
                 preludeIndex + prelude.length + 1,
                 Infinity
               );
+            }
+            if (reason.includes("voice") && ev.code === 1007) {
+              this.emit('voiceError');
             }
           }
           this.log(
@@ -159,18 +167,21 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
   }
 
   disconnect(ws?: WebSocket) {
+    console.log("Attempting to disconnect WebSocket...");
     // could be that this is an old websocket and theres already a new instance
     // only close it if its still the correct reference
     if ((!ws || this.ws === ws) && this.ws) {
       this.ws.close();
       this.ws = null;
       this.log("client.close", `Disconnected`);
+      console.log("WebSocket disconnected.");
       return true;
     }
     return false;
   }
 
   protected async receive(blob: Blob) {
+    console.log("Received message from WebSocket.");
     const response: LiveIncomingMessage = (await blobToJSON(
       blob
     )) as LiveIncomingMessage;

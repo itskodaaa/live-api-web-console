@@ -16,11 +16,11 @@
 
 import { createContext, FC, ReactNode, useContext, useState } from "react";
 import { useLiveAPI, UseLiveAPIResults } from "../hooks/use-live-api";
-import { FunctionDeclaration, Tool } from '@google/generative-ai';
+import { FunctionDeclaration, Part, Tool } from '@google/generative-ai';
 
 interface LiveAPIContextResults extends UseLiveAPIResults {
-  sourceDocument: string | null;
-  setSourceDocument: (doc: string | null) => void;
+  sourceDocument: Part[] | null;
+  setSourceDocument: (doc: Part[] | null) => void;
   setTools: (tools: FunctionDeclaration[]) => void;
 }
 
@@ -33,6 +33,8 @@ export type LiveAPIProviderProps = {
   url?: string;
   apiKey: string;
   tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>;
+  voice?: string | null;
+  systemInstruction?: { parts: Part[] };
 };
 
 export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({
@@ -40,9 +42,11 @@ export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({
   apiKey,
   children,
   tools,
+  voice,
+  systemInstruction,
 }) => {
-  const liveAPI = useLiveAPI({ url, apiKey, tools });
-  const [sourceDocument, setSourceDocument] = useState<string | null>(null);
+  const liveAPI = useLiveAPI({ url, apiKey, tools, voice, systemInstruction });
+  const [sourceDocument, setSourceDocument] = useState<Part[] | null>(null);
 
   return (
     <LiveAPIContext.Provider

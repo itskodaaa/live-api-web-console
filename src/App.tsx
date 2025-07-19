@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import "./App.scss";
 import { LiveAPIProvider, useLiveAPIContext } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
@@ -22,6 +22,8 @@ import { Altair } from "./components/altair/Altair";
 import ControlTray from "./components/control-tray/ControlTray";
 import cn from "classnames";
 import { QuizTool, declaration as quizToolDeclaration } from './components/quiz-tool/QuizTool';
+import { declaration as graphToolDeclaration } from './components/altair/graph-tool';
+import { Part } from '@google/generative-ai';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== 'string') {
@@ -32,24 +34,50 @@ const host = 'generativelanguage.googleapis.com';
 const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
 
 function AppContent() {
-  const { setSourceDocument } = useLiveAPIContext();
+  const { setSourceDocument, sourceDocument, setConfig } = useLiveAPIContext();
   // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
   // feel free to style as you see fit
   const videoRef = useRef<HTMLVideoElement>(null);
   // either the screen capture, the video or null, if null we hide it
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
+  const systemInstructionParts = useMemo(() => {
+    const parts: Part[] = [];
+    parts.push({ text: "You are Vozia, an interactive AI tutor speaking with the user. Your persona is friendly, encouraging, patient, and knowledgeable, with a slightly enthusiastic tone. Do not be overly formal. Your primary goal is to help the user learn. Start by asking if the user is studying for something specific (like a test) or just wants to understand the topic better, so you can adjust your style. Keep your spoken responses relatively concise unless asked for more detail. Ask questions frequently to check the user's understanding and keep the session interactive. If the user interrupts, stop speaking immediately and listen. After explaining a concept or answering a question, offer a brief quiz question to reinforce learning. Then ask the user if they have more questions on that topic. When the user indicates they are satisfied with the current topic, ask if they want to discuss another topic or end the session. If they want to end, remind them to use the 'End Session' button." });
+
+    if (sourceDocument) {
+      parts.push({ text: `A document has been provided via URL. You MUST use this document as your primary source of information for teaching, answering questions, generating quizzes, and creating graphs. DO NOT ask the user for content or to upload a document if a document has already been provided.` });
+    }
+
+    parts.push({ text: "You have access to several tools to assist the user. You should proactively use these tools when appropriate, without being explicitly asked. " +
+      "1. `create_quiz`: This tool generates quizzes. When the user asks for a quiz, or if you determine that a quiz would be beneficial based on the conversation or provided document, you MUST call the `create_quiz` tool with the quiz data. The quiz data should be an array of objects, each containing a 'question', 'answers' (an array of strings), and 'correct_answer_index' (the zero-based index of the correct answer). " +
+      "2. `googleSearch`: Use this tool when you need to find information on the internet to answer a user's question or to gather more context. " +
+      "3. `display_graph`: This tool displays a graph visualization. When the user asks to visualize data, create charts, or display graphs, you MUST call the `display_graph` tool with a Vega-Lite or Vega JSON specification. You should generate a relevant graph based on the conversation or provided data." });
+    return parts;
+  }, [sourceDocument]);
+
+  useEffect(() => {
+    setConfig(prevConfig => ({
+      ...prevConfig,
+      systemInstruction: { parts: systemInstructionParts },
+    }));
+  }, [systemInstructionParts, setConfig]);
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const fileUrl = urlParams.get('fileUrl');
 
     if (fileUrl) {
-      fetch(fileUrl)
-        .then((response) => response.text())
-        .then((data) => {
-          setSourceDocument(data);
-        })
-        .catch((error) => console.error('Error fetching file:', error));
+      // Determine MIME type based on file extension or a default
+      const mimeType = fileUrl.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream';
+
+      const part: Part = {
+        fileData: {
+          mimeType: mimeType,
+          fileUri: fileUrl,
+        },
+      };
+      setSourceDocument([part]); // Set as an array of Parts
     }
   }, [setSourceDocument]);
 
@@ -85,9 +113,22 @@ function AppContent() {
   );
 }
 
+function getVoiceFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('voice');
+}
+
 function App() {
+  const urlVoice = getVoiceFromUrl();
+
   return (
-    <LiveAPIProvider url={uri} apiKey={API_KEY} tools={[{ functionDeclarations: [quizToolDeclaration] }, { googleSearch: {} }]}>
+    <LiveAPIProvider
+      url={uri}
+      apiKey={API_KEY}
+      tools={[{ functionDeclarations: [quizToolDeclaration, graphToolDeclaration] }, { googleSearch: {} }]}
+      voice={urlVoice}
+    >
       <AppContent />
     </LiveAPIProvider>
   );
