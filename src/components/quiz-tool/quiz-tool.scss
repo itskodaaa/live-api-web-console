@@ -4,6 +4,11 @@
   gap: 20px;
   padding: 20px;
 
+  @media (max-width: 768px) {
+    padding: 10px;
+    gap: 10px;
+  }
+
   button {
     background-color: #4caf50;
     border: none;
@@ -15,6 +20,11 @@
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+      padding: 10px 20px;
+      font-size: 14px;
+    }
   }
 
   .quiz-question {
@@ -23,10 +33,18 @@
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
+    @media (max-width: 768px) {
+      padding: 10px;
+    }
+
     p {
       margin-bottom: 10px;
       font-size: 1.1em;
       color: #eee;
+
+      @media (max-width: 768px) {
+        font-size: 1em;
+      }
     }
 
     ul {

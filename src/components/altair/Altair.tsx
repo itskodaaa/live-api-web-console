@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { useEffect, useRef, useState, memo } from "react";
+import cn from "classnames";
 import vegaEmbed from "vega-embed";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 import { ToolCall } from "../../multimodal-live-types";
 import { declaration as graphToolDeclaration } from './graph-tool';
 
-function AltairComponent() {
+function AltairComponent({ className }: { className?: string }) {
   const [jsonString, setJSONString] = useState<string>("");
   const { client } = useLiveAPIContext();
 
@@ -61,7 +62,7 @@ function AltairComponent() {
       vegaEmbed(embedRef.current, JSON.parse(jsonString));
     }
   }, [embedRef, jsonString]);
-  return <div className="vega-embed" ref={embedRef} />;
+  return <div className={cn("vega-embed", className)} ref={embedRef} />;
 }
 
 export const Altair = memo(AltairComponent);

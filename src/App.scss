@@ -153,6 +153,29 @@ body, html {
     flex: 1;
     align-items: center;
     justify-content: center;
+    width: 100%;
+
+    &.quiz-active, &.graph-active {
+      .vega-embed, .quiz-tool {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+
+      &.quiz-active, &.graph-active {
+        .vega-embed, .quiz-tool {
+          width: 100%;
+          height: auto;
+        }
+      }
+    }
   }
 
   .function-call {

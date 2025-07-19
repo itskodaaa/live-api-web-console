@@ -1,5 +1,6 @@
 import { type FunctionDeclaration, SchemaType } from '@google/generative-ai';
 import { useEffect, useState, memo } from 'react';
+import cn from "classnames";
 import { useLiveAPIContext } from '../../contexts/LiveAPIContext';
 import { ToolCall } from '../../multimodal-live-types';
 import './quiz-tool.scss';
@@ -48,7 +49,7 @@ type QuizItem = {
   correct_answer_index: number;
 };
 
-function QuizToolComponent() {
+function QuizToolComponent({ className }: { className?: string }) {
   const [quizData, setQuizData] = useState<QuizItem[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -107,7 +108,7 @@ function QuizToolComponent() {
   };
 
   return (
-    <div className='quiz-tool'>
+    <div className={cn('quiz-tool', className)}>
       {quizData.length > 0 && <h3>Quiz Questions:</h3>}
       {quizData.map((quizItem, questionIndex) => (
         <div key={questionIndex} className='quiz-question'>
