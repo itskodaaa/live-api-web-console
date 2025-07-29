@@ -34,7 +34,7 @@ const host = 'generativelanguage.googleapis.com';
 const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
 
 function AppContent() {
-  const { setSourceDocument, sourceDocument, setConfig, client } = useLiveAPIContext();
+  const { setSourceDocument, sourceDocument, setConfig, client, connect } = useLiveAPIContext();
   // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
   // feel free to style as you see fit
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -93,21 +93,11 @@ function AppContent() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const fileUrl = urlParams.get('fileUrl');
-
-    if (fileUrl) {
-      // Determine MIME type based on file extension or a default
-      const mimeType = fileUrl.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream';
-
-      const part: Part = {
-        fileData: {
-          mimeType: mimeType,
-          fileUri: fileUrl,
-        },
-      };
-      setSourceDocument([part]); // Set as an array of Parts
+    const autoStart = urlParams.get('autoStart');
+    if (autoStart === 'true') {
+      connect();
     }
-  }, [setSourceDocument]);
+  }, [connect]);
 
   return (
     <div className='App'>

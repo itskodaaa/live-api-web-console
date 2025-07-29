@@ -92,19 +92,16 @@ function QuizToolComponent({ className }: { className?: string }) {
       const newSelectedAnswers = [...selectedAnswers];
       newSelectedAnswers[questionIndex] = answerIndex;
       setSelectedAnswers(newSelectedAnswers);
+      setQuizSubmitted(true);
+
+      const quizResults = {
+        question: quizData[questionIndex].question,
+        selectedAnswer: quizData[questionIndex].answers[answerIndex],
+        isCorrect: answerIndex === quizData[questionIndex].correct_answer_index,
+      };
+
+      client.send([{ text: `User submitted quiz result: ${JSON.stringify(quizResults)}` }], false);
     }
-  };
-
-  const handleSubmitQuiz = () => {
-    setQuizSubmitted(true);
-
-    const quizResults = quizData.map((quizItem, index) => ({
-      question: quizItem.question,
-      selectedAnswer: selectedAnswers[index] !== -1 ? quizItem.answers[selectedAnswers[index]] : 'No answer selected',
-      isCorrect: selectedAnswers[index] === quizItem.correct_answer_index,
-    }));
-
-    client.send([{ text: `User submitted quiz results: ${JSON.stringify(quizResults)}` }]);
   };
 
   return (
@@ -136,9 +133,6 @@ function QuizToolComponent({ className }: { className?: string }) {
           </ul>
         </div>
       ))}
-      {quizData.length > 0 && !quizSubmitted && (
-        <button onClick={handleSubmitQuiz}>Submit Quiz</button>
-      )}
     </div>
   );
 }
