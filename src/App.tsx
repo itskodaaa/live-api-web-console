@@ -91,13 +91,18 @@ function AppContent() {
     }));
   }, [systemInstructionParts, setConfig]);
 
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const autoStart = urlParams.get('autoStart');
-    if (autoStart === 'true') {
-      connect();
+    if (autoStart === 'true' && !hasAutoStarted) {
+      connect().then(() => {
+        client.send({ text: 'Hello!' });
+      });
+      setHasAutoStarted(true);
     }
-  }, [connect]);
+  }, [connect, client, hasAutoStarted]);
 
   return (
     <div className='App'>
